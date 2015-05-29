@@ -1,31 +1,46 @@
-var easyYoutube=(function(){
-	var width=560,height=315;
+var easyYoutube = (function(){
+	var singleton = {};
 
-	function showVideo(response,callback){
-	    if (response.data && response.data.items){
-	        var items=response.data.items;
-	        if (items.length>0){
-	            var item=items[0]
-	            	,videoid='http://www.youtube.com/embed/'+item.id
-	            	,html='<iframe width="'+width+'" height="'+height+'" src="'+videoid+'" frameborder="0" allowfullscreen></iframe>';
-	            callback.call(null,html);
-	        }
-	    }
+	var width = 560
+		,height = 315
+		,key = ''
+		,baseUrl = 'https://www.googleapis.com/youtube/v3/';
+
+	function getFirstVideo(response){
+		if (!response.items || response.items.length<1){
+			return false;
+		}
+		return response.items[0];
 	}
 
-	var cls={};
+	function showVideo(video, callback){
+		var url = '', html = ''
+		if (video){
+			url = 'https://www.youtube.com/embed/'+video.id.videoId;
+        	html = '<iframe width="'+width+'" height="'+height+'" src="'+url+'" frameborder="0" allowfullscreen></iframe>';
+        }
+        callback.call(null, html);
+	}
 
-	cls.loadVideoLatest=function(user,callback){
-		$.getJSON('https://gdata.youtube.com/feeds/api/users/'+user+'/uploads?max-results=1&orderby=published&v=2&alt=jsonc',function(response){
-			showVideo(response,callback);
+	singleton.loadVideoLatest = function(channelId, callback){
+		var url = baseUrl+'search?key='+key+'&channelId='+channelId+'&part=id&order=date&maxResults=1';
+		console.log(url);
+		$.getJSON(url, function(response){
+			console.log(response);
+			var video = getFirstVideo(response);
+			showVideo(video, callback);
 		});
 	};
 
-	cls.setDimension=function(setWidth,setHeight){
-		width=setWidth;
-		height=setHeight;
+	singleton.setDimension = function(setWidth, setHeight){
+		width = setWidth;
+		height = setHeight;
 		return this;
-	}
+	};
 
-	return cls;
+	singleton.setKey = function(setKey){
+		key = setKey;
+	};
+
+	return singleton;
 })();
